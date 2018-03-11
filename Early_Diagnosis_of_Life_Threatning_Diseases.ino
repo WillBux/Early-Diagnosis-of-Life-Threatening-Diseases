@@ -76,23 +76,12 @@ String collect1() {
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("Collect 1");
-  unsigned int timeout = 0;
-  bool fail1 = false;
   String data1 = "";
-  while(Serial1.available()==0){
-    if(++timeout > 10000){
-      fail1 = true;
-      break;
-    }
-  }
+  while(Serial1.available()==0){}
   data1 = Serial1.readString();
   if(data1.indexOf("sensing") > -1) {
-      while(Serial.available() < 1) {}
-      data1 = Serial1.readString();
-      fail1 = false;
-  }
-  if(fail1) {
-    return "";
+    while(Serial.available() < 1) {}
+    data1 = Serial1.readString();
   }
   return data1;
 }
@@ -101,23 +90,12 @@ String collect2() {
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("Collect 2");
-  unsigned int timeout = 0;
-  bool fail2 = false;
   String data2 = "";
-  while(Serial2.available()==0){
-    if(++timeout > 10000){
-      fail2 = true;
-      break;
-    }
-  }
+  while(Serial2.available()==0){}
   data2 = Serial2.readString();
   if(data2.indexOf("sensing") > -1) {
-      while(Serial.available() < 1) {}
-      data2 = Serial2.readString();
-      fail2 = false;
-  }
-  if (fail2) {
-    return "";
+    while(Serial.available() < 1) {}
+    data2 = Serial2.readString();
   }
   return data2;
 }
@@ -129,38 +107,26 @@ String collect3() {
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("Collect 3");
-  return "st";
-  unsigned int timeout = 0;
-  bool fail3 = false;
   String data3 = "";
-  while(Serial3.available()==0){
-    if(++timeout > 10000){
-      fail3 = true;
-      break;
-    }
-  }
+  while(Serial3.available()==0){}
   data3 = Serial3.readString();
   if(data3.indexOf("sensing") > -1) {
        while(Serial.available() < 1) {}
        data3 = Serial3.readString();
-       fail3 = false;
-  }
-  if(fail3) {
-    return "";
   }
   return data3;
 }
 
 bool publish(String da1, String da2, String da3) {
-  String GET = "GET pushingbox?devid=vC6CB20C11C11B9F&S1" + da1 + "&S2" + da2 + "&S3" + da3 + " HTTP/1.0";
+  String GET = "GET pushingbox?devid=vC6CB20C11C11B9F&S1=" + da1 + "&S2=" + da2 + "&S3=" + da3 + " HTTP/1.1";
   String CIP = "AT+CIPSEND=" + String(GET.length() + 4 + 28 + 23 + 21);
   if (startMan) {
+    Serial3.println("AT+CIPMODE=0");
+    Serial.println(Serial3.readString());
+    delay(100);
     Serial3.println("AT+CIPSTART=\"TCP\",\"api.pushingbox.com\",80");
     Serial.println(Serial3.readString());
     delay(2000);
-    Serial3.println("AT+CIPMODE=0");
-    Serial.println(Serial3.readString());
-    delay(1000);
     Serial3.println(CIP);
     Serial.println(Serial3.readString());
     delay(100);
@@ -241,10 +207,11 @@ void loop() {
   d1 = collect1();
   Serial2.println("start");
   d2 = collect2();
+  d3 = "";
   if (!startMan) {
     Serial3.println("start");
+    d3 = collect3();
   }
-  d3 = collect3();
   do {
     success = publish(d1, d2, d3);
   } while(!success);
