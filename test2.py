@@ -5,12 +5,14 @@ from pandas import read_csv
 import math
 from keras.models import Sequential
 from keras.layers import Dense
-from keras.layers import LSTM, Flatten
+from keras.layers import LSTM, Flatten, Activation
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import cross_val_score, cross_val_predict
 import random
 import timeit
+from keras import optimizers
+from keras.layers.advanced_activations import LeakyReLU
 
 # convert an array of values into a dataset matrix
 def create_dataset(dataset, look_back=1):
@@ -37,67 +39,6 @@ numpy.random.seed(7)
 # dataset = dataframe.values
 # dataframe["Column"]= dataframe["Day1"].apply(numpy.fromstring, sep=",")
 # print("Data: " + str(dataframe))
-
-dataframe = pd.DataFrame([[[890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [654, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649], [1]],
-			  [[890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [654, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649], [0]],
-			  [[890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [654, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649], [1]],
-			  [[890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [654, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649], [1]],
-			  [[890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [654, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649], [0]],
-			  [[890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [654, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649],
-			  [890, 123, 496, 987, 231, 903, 862, 214, 367, 649], [0]]])
 #dataset = dataframe.values
 
 
@@ -264,9 +205,11 @@ print(trainX.shape)
 model = Sequential()
 model.add(LSTM(40, input_shape=(11,10),return_sequences=True))
 model.add(Flatten())
-model.add(Dense(100, activation="relu"))
+model.add(Dense(100))
+model.add(LeakyReLU())
 model.add(Dense(1, activation='linear'))
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
+adam = optimizers.Adam(lr=0.00001)
+model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['mse', 'acc'])
 print(model.summary())
 print(trainX.shape)
 print(trainY.shape)
@@ -288,9 +231,10 @@ print(trainY.shape)
 
 #input_shape=X_train.shape[1:]
 #TRAINY = TARGETS
-model.fit(trainX, trainY, epochs=100, batch_size=150, verbose=2)
+model.fit(trainX, trainY, epochs=500, batch_size=150, verbose=2)
 # make predictions
 trainPredict = model.predict(trainX)
+print(trainPredict)
 # testPredict = model.predict(testX)
 # invert predictions
 #trainPredict = scaler.inverse_transform(trainPredict)
